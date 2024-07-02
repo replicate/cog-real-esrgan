@@ -85,7 +85,7 @@ class Predictor(BasePredictor):
 
         cv2.imwrite(save_path, output)
         emit_metric("scale", scale)
-        emit_metric("original_height", img.shape[0])
-        emit_metric("original_width", img.shape[1])
+        emit_metric("input_height", img.shape[0])
+        emit_metric("input_width", img.shape[1])
         emit_metric("face_enhance", face_enhance)
         return Path(save_path)
