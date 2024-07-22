@@ -18,6 +18,8 @@ EXTRA_URL = "https://weights.replicate.delivery/default/official-models/tencent/
 MODEL_FOLDER = "/src/weights/esrgan/"
 GFPGAN_FOLDER = "/src/gfpgan/weights/"
 
+MAX_IMAGE_SIZE = 1448 * 1448
+
 def download_weights(url, dest):
     start = time.time()
     print("downloading url: ", url)
@@ -71,6 +73,8 @@ class Predictor(BasePredictor):
         ),
     ) -> Path:
         img = cv2.imread(str(image), cv2.IMREAD_UNCHANGED)
+        if (img.shape[0] * img.shape[1] > MAX_IMAGE_SIZE):
+            raise ValueError(f"Image total number of pixels {img.shape[0] * img.shape[1]} are larger than {MAX_IMAGE_SIZE}.")
 
         if face_enhance:
             print("running with face enhancement")
