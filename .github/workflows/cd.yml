@@ -1,17 +1,17 @@
 name: replicate-cd
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   push:
     runs-on: ubuntu-latest
-    env:
-      BASE_MODEL: 'replicate/real-esrgan'
-      PROD_MODEL: 'replicate/real-esrgan'
-      PROD_DEPLOYMENT: 'replicate/official-real-esrgan'
+    strategy:
+      matrix:
+        model: ['daanelson/real-esrgan-a100', 'nightmareai/real-esrgan']
 
     steps:
     - name: checkout
@@ -22,7 +22,7 @@ jobs:
     - name: what changed
       id: what-changed
       run: |
-        FILES_CHANGED=$(git diff --name-only --diff-filter=AMR origin/master HEAD | xargs)
+        FILES_CHANGED=$(git diff --name-only --diff-filter=AMR origin/main HEAD | xargs)
         echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
         if echo "$FILES_CHANGED" | grep -q 'cog.yaml'; then
             echo "cog-push=true" >> $GITHUB_OUTPUT
@@ -56,7 +56,7 @@ jobs:
     - name: cog-push
       if: steps.what-changed.outputs.cog-push == 'true'
       run: |
-        cog push r8.im/"$PROD_MODEL"
+        cog push r8.im/${{ matrix.model}}
 
     - name: install-yolo
       if: steps.what-changed.outputs.cog-push == 'false'
@@ -69,9 +69,9 @@ jobs:
       env:
        REPLICATE_API_TOKEN: ${{secrets.REPLICATE_API_TOKEN}}
       run: |
-        echo "pushing changes from $BASE_MODEL to $PROD_MODEL"
+        echo "pushing changes to ${{matrix.model}}"
         echo "changed files: $FILES_CHANGED"
-        yolo push --base $BASE_MODEL --dest $PROD_MODEL $FILES_CHANGED
+        yolo push --base ${{matrix.model}} --dest ${{matrix.model}} $FILES_CHANGED
 
     - uses: actions/setup-python@v5
       with:
@@ -84,21 +84,7 @@ jobs:
     - name: test model
       env:
        REPLICATE_API_TOKEN: ${{secrets.REPLICATE_API_TOKEN}}
+       PROD_MODEL: ${{ matrix.model }}
        TEST_ENV: 'prod'
       run: |
         pytest replicate_tests
-
-    - name: update deployment
-      env:
-        REPLICATE_API_TOKEN: ${{secrets.REPLICATE_API_TOKEN}}
-
-      run: |
-        sudo apt-get install jq
-        export LATEST_VERSION=$(curl -s -H "Authorization: Token $REPLICATE_API_TOKEN" \
-          https://api.replicate.com/v1/models/$PROD_MODEL/versions | jq -r '.results[0].id')
-        curl -s \
-          -X PATCH \
-          -H "Authorization: Token $REPLICATE_API_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d '{"version": "'$LATEST_VERSION'" }' \
-          https://api.replicate.com/v1/deployments/$PROD_DEPLOYMENT
