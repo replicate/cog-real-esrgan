@@ -43,10 +43,25 @@ jobs:
 
     - name: setup-cog
       if: steps.what-changed.outputs.cog-push == 'true'
-      uses: replicate/setup-cog@v1.0.3
+      uses: replicate/setup-cog@v2
       with:
         token: ${{ secrets.REPLICATE_API_TOKEN }}
         install-cuda: false
+        cog-version: "v0.10.0-alpha17"
+
+    - name: free-disk-space
+      if: steps.what-changed.outputs.cog-push == 'true'
+      uses: jlumbroso/free-disk-space@main
+      with:
+        # this might remove tools that are actually needed,
+        # if set to "true" but frees about 6 GB
+        tool-cache: false
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: false
+        swap-storage: true
 
     - name: cog-build
       if: steps.what-changed.outputs.cog-push == 'true'
