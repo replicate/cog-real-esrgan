@@ -2,9 +2,9 @@ name: replicate-cd
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 jobs:
   push:
