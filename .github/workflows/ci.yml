@@ -62,11 +62,6 @@ jobs:
         docker-images: false
         swap-storage: true
 
-    - name: cog-build
-      if: steps.what-changed.outputs.cog-push == 'true'
-      run: |
-        cog build
-
     - name: cog-push
       if: steps.what-changed.outputs.cog-push == 'true'
       run: |
