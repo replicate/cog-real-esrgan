@@ -74,7 +74,7 @@ class Predictor(BasePredictor):
     ) -> Path:
         img = cv2.imread(str(image), cv2.IMREAD_UNCHANGED)
         if (img.shape[0] * img.shape[1] > MAX_IMAGE_SIZE):
-            raise ValueError(f"Image total number of pixels {img.shape[0] * img.shape[1]} are larger than {MAX_IMAGE_SIZE}.")
+            raise ValueError(f"Input image of dimensions {img.shape} has a total number of pixels {img.shape[0] * img.shape[1]} greater than the max size that fits in GPU memory on this hardware, {MAX_IMAGE_SIZE}. Resize input image and try again.")
 
         if face_enhance:
             print("running with face enhancement")
@@ -86,7 +86,7 @@ class Predictor(BasePredictor):
         else:
             print("running without face enhancement")
             output, _ = self.upsampler.enhance(img, outscale=scale)
-        save_path =  "output.png"
+        save_path = "output.png"
 
         cv2.imwrite(save_path, output)
         emit_metric("scale", scale)
